@@ -1,15 +1,17 @@
 import React, { useState } from "react";
 import { ArrowLeftIcon, FilterIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ListingCard from "../components/ListingCard";
 import FilterSideBar from "../components/FilterSideBar";
 
 const MarketPlace = () => {
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get("search");
   const navigate = useNavigate();
   const [showFilterPhone, setShowFilterPhone] = useState(false);
   const [filter, setFilter] = useState({
-    plateform: null,
+    platform: null,
     maxPrice: 100000,
     minFollowers: 0,
     niche: null,
@@ -18,6 +20,51 @@ const MarketPlace = () => {
   });
   const { listings } = useSelector((state) => state.listings);
   const filterListings = listings.filter((listing) => {
+    const activePlatforms = filter.platform || [];
+    if (
+      activePlatforms.length > 0 &&
+      !activePlatforms.includes(listing.platform)
+    ) {
+      return false;
+    }
+
+    const maxPriceLimit = Number.isFinite(Number(filter.maxPrice))
+      ? Number(filter.maxPrice)
+      : 100000;
+    if (listing.price > maxPriceLimit) {
+      return false;
+    }
+
+    const minFollowersRequired = Number(filter.minFollowers) || 0;
+    if (listing.followers_count < minFollowersRequired) {
+      return false;
+    }
+
+    if (filter.niche) {
+      if (Array.isArray(filter.niche)) {
+        if (!filter.niche.includes(listing.niche)) return false;
+      } else if (listing.niche !== filter.niche) {
+        return false;
+      }
+    }
+
+    if (filter.verified && listing.verified !== filter.verified) return false;
+    if (filter.monetized && listing.monetized !== filter.monetized)
+      return false;
+    if (search) {
+      const trimed = search.trim();
+      if (
+        !listing.title.toLowerCase().includes(trimed.toLocaleLowerCase()) &&
+        !listing.username.toLowerCase().includes(trimed.toLocaleLowerCase()) &&
+        !listing.platform.toLowerCase().includes(trimed.toLocaleLowerCase()) &&
+        !listing.description
+          .toLowerCase()
+          .includes(trimed.toLocaleLowerCase()) &&
+        !listing.niche.toLowerCase().includes(trimed.toLocaleLowerCase())
+      )
+        return false;
+    }
+
     return true;
   });
 
