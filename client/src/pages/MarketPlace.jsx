@@ -105,7 +105,13 @@ const MarketPlace = () => {
               ))}
           </div>
         </div>
+        <footer className="bg-white border-t border-gray-200 p-4 text-center mt-28">
+          <p className="text-sm text-gray-500">
+            © 2025 <span className="text-blue-600">Manish.Dev</span>. All rights reserved.
+          </p>
+        </footer>
       </div>
+      
     </div>
   );
 };

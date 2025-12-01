@@ -9,7 +9,9 @@ import Messages from './pages/Messages'
 import MyOrders from './pages/MyOrders' 
 import Navbar from './components/Navbar'
 import MyListings from './pages/MyListings'
-import Footer from './components/Footer'
+import ChatBox from './components/ChatBox'
+import {Toaster} from 'react-hot-toast'
+
 
 
 
@@ -18,9 +20,10 @@ const App = () => {
 
   return (
    <div>
+    <Toaster/>
     {!pathname.includes('/admin') && <Navbar/>}
     <Routes>
-      <Route path='/' element={<Home />} />
+      <Route path='/' element={<Home/>} />
       <Route path='/marketplace' element={<MarketPlace />} />
       <Route path='/my-listings' element={<MyListings />} />
       <Route path='/listing/:listingId' element={<ListingDetails />} />
@@ -31,7 +34,7 @@ const App = () => {
       <Route path='/my-orders' element={<MyOrders />} />
       <Route path='/loading' element={<Loading />} />
     </Routes>
-    <Footer/>
+    <ChatBox/>
    </div>
   )
 }
