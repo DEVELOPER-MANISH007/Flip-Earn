@@ -223,7 +223,7 @@ const MyListings = () => {
                                 <TrashIcon className="size-4"/>
                               </button>
                             )}
-                            <button onClick={()=>navigate(`/edit-listing/$${listing.id}`)} className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-indigo-500">
+                            <button onClick={()=>navigate(`/edit-listing/${listing.id}`)} className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-indigo-500">
                               <Edit className="size-4"/>
                             </button>
 
