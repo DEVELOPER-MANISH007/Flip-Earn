@@ -1,9 +1,14 @@
 import multer from 'multer'
+import path from 'path'
+import os from 'os'
 
 const storage = multer.diskStorage({
-    filename: (req,file,cb) => {
-
-        cb(null,file.originalname)
+    destination: (req, file, cb) => {
+        cb(null, os.tmpdir())
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname))
     }
 })
 

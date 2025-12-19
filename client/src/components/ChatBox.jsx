@@ -4,27 +4,48 @@ import { dummyChats } from "../assets/assets";
 import { Loader2Icon, LoaderIcon, Send, X } from "lucide-react";
 import { clearChat } from "../App/Features/chatSlice";
 import { format } from "date-fns";
+import { useAuth, useUser } from "@clerk/clerk-react";
+import api from "../configs/axios";
+import toast from "react-hot-toast";
 
 const ChatBox = () => {
   const { listing, isOpen, chatId } = useSelector((state) => state.chat);
-  const user = { id: "user_2" };
-
+  const {getToken} = useAuth()
+  const { user } = useUser()
   const dispatch = useDispatch();
   const [chat, setChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessages, setNewMessages] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+
   const [isSending, setIsSending] = useState(false);
 
+
+ 
+
   const fetchChat = async () => {
-    setChat(dummyChats[0]);
-    setMessages(dummyChats[0].messages);
-    setIsLoading(false);
+    
+    try {
+      const token  = await getToken()
+      const {data} = await api.post('/api/chat',{listingId:listing.id,chatId},{headers:{Authorization:`Bearer ${token}`}})
+      setChat(data?.chat)
+      setMessages(data?.chat?.messages||[])
+      setIsLoading(false)
+      
+    } catch (error) {
+      toast.error(error?.response?.data?.message||error.message)
+      console.log(error)
+    }
   };
 
   useEffect(() => {
     if (listing) {
       fetchChat();
+      const interval = setInterval(() => {
+        fetchChat()
+        
+      }, 3000);
+      return ()=>clearInterval(interval)
     }
   }, [listing]);
 
@@ -47,8 +68,18 @@ const ChatBox = () => {
   const handleSendMessage = async(e)=>{
         e.preventDefault()
         if(!newMessages.trim()|| isSending) return
-        setMessages([...messages,{id:Date.now(),chatId:chat.id,sender_id:user.id,message:newMessages,createdAt:new Date()}])
-        setNewMessages('')
+        setIsSending(true)
+      try {
+        const token  = await getToken()
+        const {data} = await api.post('/api/chat/send-message',{chatId:chat.id,messages:newMessages},{headers:{Authorization:`Bearer ${token}`}})
+        setMessages([...messages,data.newMessages])
+        setNewMessages("")
+        setIsSending(false)
+      } catch (error) {
+        toast.error(error?.response?.data?.message||error.message)
+      console.log(error)
+      setIsSending(false)
+      }
   }
 
   if (!isOpen || !listing) return null;

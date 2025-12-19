@@ -1,7 +1,7 @@
-export const protect = async(req,resizeBy,next)=>{
+export const protect = async(req,res,next)=>{
     try {
         const {userId,has} = await req.auth()
-        if(userId){
+        if(!userId){
             return res.status(401).json({message:"Unauthorized"})
         }
         const hasPremiumPlan = await has({plan:"premium"})

@@ -1,14 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowLeftIcon, FilterIcon } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import ListingCard from "../components/ListingCard";
 import FilterSideBar from "../components/FilterSideBar";
+import { getAllPublicLising } from "../App/Features/ListingSlice";
 
 const MarketPlace = () => {
   const [searchParams] = useSearchParams();
   const search = searchParams.get("search");
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const [showFilterPhone, setShowFilterPhone] = useState(false);
   const [filter, setFilter] = useState({
     platform: null,
@@ -18,58 +21,41 @@ const MarketPlace = () => {
     verified: false,
     monetized: false,
   });
+
   const { listings } = useSelector((state) => state.listings);
-  const filterListings = listings.filter((listing) => {
-    const activePlatforms = filter.platform || [];
-    if (
-      activePlatforms.length > 0 &&
-      !activePlatforms.includes(listing.platform)
-    ) {
-      return false;
-    }
 
-    const maxPriceLimit = Number.isFinite(Number(filter.maxPrice))
-      ? Number(filter.maxPrice)
-      : 100000;
-    if (listing.price > maxPriceLimit) {
-      return false;
-    }
+  useEffect(() => {
+    dispatch(getAllPublicLising());
+  }, [dispatch]);
 
-    const minFollowersRequired = Number(filter.minFollowers) || 0;
-    if (listing.followers_count < minFollowersRequired) {
+  const filterListings = (listings || []).filter((listing) => {
+    if (filter.platform?.length && !filter.platform.includes(listing.platform))
       return false;
-    }
+    if (listing.price > Number(filter.maxPrice || 100000)) return false;
+    if (listing.followers_count < Number(filter.minFollowers || 0)) return false;
+    if (filter.niche && listing.niche !== filter.niche) return false;
+    if (filter.verified && !listing.verified) return false;
+    if (filter.monetized && !listing.monetized) return false;
 
-    if (filter.niche) {
-      if (Array.isArray(filter.niche)) {
-        if (!filter.niche.includes(listing.niche)) return false;
-      } else if (listing.niche !== filter.niche) {
-        return false;
-      }
-    }
-
-    if (filter.verified && listing.verified !== filter.verified) return false;
-    if (filter.monetized && listing.monetized !== filter.monetized)
-      return false;
     if (search) {
-      const trimed = search.trim();
+      const term = search.toLowerCase();
       if (
-        !listing.title.toLowerCase().includes(trimed.toLocaleLowerCase()) &&
-        !listing.username.toLowerCase().includes(trimed.toLocaleLowerCase()) &&
-        !listing.platform.toLowerCase().includes(trimed.toLocaleLowerCase()) &&
-        !listing.description
-          .toLowerCase()
-          .includes(trimed.toLocaleLowerCase()) &&
-        !listing.niche.toLowerCase().includes(trimed.toLocaleLowerCase())
+        !listing.title?.toLowerCase().includes(term) &&
+        !listing.username?.toLowerCase().includes(term) &&
+        !listing.platform?.toLowerCase().includes(term) &&
+        !listing.description?.toLowerCase().includes(term) &&
+        !listing.niche?.toLowerCase().includes(term)
       )
         return false;
     }
-
     return true;
   });
 
   return (
-    <div className="px-6 md:px-16 lg:px-24 xl:px-32">
+    // 🔥 KEY FIX: full height layout
+    <div className="min-h-screen flex flex-col px-6 md:px-16 lg:px-24 xl:px-32">
+      
+      {/* ---------------- HEADER ---------------- */}
       <div className="flex items-center justify-between text-slate-500">
         <button
           className="flex items-center gap-2 py-5"
@@ -81,37 +67,45 @@ const MarketPlace = () => {
           <ArrowLeftIcon className="size-4" />
           Back to Home
         </button>
-        <button
-          onClick={() => setShowFilterPhone(true)}
-          className="flex sm:hidden items-center gap-2 py-5"
-        >
-          <FilterIcon className="size-4" />
-          Filter
-        </button>
+
+        {listings && listings.length > 1 && (
+          <button
+            onClick={() => setShowFilterPhone(true)}
+            className="flex sm:hidden items-center gap-2 py-5"
+          >
+            <FilterIcon className="size-4" />
+            Filter
+          </button>
+        )}
       </div>
-      <div>
-        <div className="flex relative items-start justify-between gap-8 pb-8">
+
+      {/* ---------------- MAIN CONTENT (flex-1) ---------------- */}
+      <div className="flex-1 flex relative items-start gap-8 pb-8">
+        {listings && listings.length > 1 && (
           <FilterSideBar
             showFilterPhone={showFilterPhone}
             setShowFilterPhone={setShowFilterPhone}
             filter={filter}
             setFilter={setFilter}
           />
-          <div className="flex-1 grid xl:grid-cols-2 gap-4">
-            {filterListings
-              .sort((a, b) => (a.featured ? -1 : b.featured ? 1 : 0))
-              .map((listing, index) => (
-                <ListingCard listing={listing} key={listing.id || index} />
-              ))}
-          </div>
+        )}
+
+        <div className="flex-1 grid xl:grid-cols-2 gap-4">
+          {filterListings
+            .sort((a, b) => (a.featured ? -1 : b.featured ? 1 : 0))
+            .map((listing, index) => (
+              <ListingCard listing={listing} key={listing.id || index} />
+            ))}
         </div>
-        <footer className="bg-white border-t border-gray-200 p-4 text-center mt-28">
-          <p className="text-sm text-gray-500">
-            © 2025 <span className="text-blue-600">Manish.Dev</span>. All rights reserved.
-          </p>
-        </footer>
       </div>
-      
+
+      {/* ---------------- FOOTER (ALWAYS BOTTOM) ---------------- */}
+      <footer className="border-t border-gray-200 py-4 text-center">
+        <p className="text-sm text-gray-500">
+          © 2025 <span className="text-blue-600">Manish.Dev</span>. All rights
+          reserved.
+        </p>
+      </footer>
     </div>
   );
 };

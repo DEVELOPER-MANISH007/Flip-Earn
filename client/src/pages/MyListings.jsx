@@ -1,31 +1,37 @@
-import { ArrowDownCircleIcon, BanIcon, CheckCircle, Clock, CoinsIcon, DollarSign, DollarSignIcon, Edit, Eye, EyeIcon, EyeOffIcon, LockIcon, Plus, StarIcon, TrashIcon, TrendingUp, Users, WalletIcon, XCircle } from "lucide-react";
+import { ArrowDownCircleIcon, BanIcon, CheckCircle, Clock, CoinsIcon, DollarSign, DollarSignIcon, Edit, Eye, EyeIcon, EyeOffIcon, LockIcon, Plus, StarIcon, TrashIcon, TrendingUp, Users, WalletIcon, WineOff, XCircle } from "lucide-react";
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import StatCard from "../components/StatCard";
 import { platformIcons } from "../assets/assets";
 import CredentialSubmission from "../components/CredentialSubmission";
 import WithdrawModal from "../components/WithdrawModal";
+import { useAuth } from "@clerk/clerk-react";
+import toast from "react-hot-toast";
+import api from "../configs/axios";
+import { getAllPublicLising, getAllUserListing } from "../App/Features/ListingSlice";
 
 const MyListings = () => {
   const { userListings, balance } = useSelector((state) => state.listings);
   const currency = import.meta.env.VITE_CURRENCY || "$";
   const navigate = useNavigate();
+  const {getToken} = useAuth()
+  const dispatch  = useDispatch()
 
   const [showCredentialSubmission,setShowCredentialSubmission] = useState(null)
   const [showWithdarwal,setShowWithdarwal] = useState(null)
 
 
 
-  const totalvalue = userListings.reduce(
+  const totalvalue = (userListings || []).reduce(
     (sum, listing) => sum + (listing.price || 0),
     0
   );
 
-  const activeListings = userListings.filter(
+  const activeListings = (userListings || []).filter(
     (listing) => listing.status === "active"
   ).length;
-  const soldListings = userListings.filter(
+  const soldListings = (userListings || []).filter(
     (listing) => listing.status === "sold"
   ).length;
 
@@ -76,11 +82,60 @@ const MyListings = () => {
   }
 
 
-  const toggleStatus = async(listingId)=>{
+  const toggleStatus = async (listingId) => {
+    try {
+      toast.loading("Updating listing status")
+      const token = await getToken()
+      const { data } = await api.get(
+        `/api/listing/${listingId}/status`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      dispatch(getAllUserListing({ getToken }))
+      dispatch(getAllPublicLising())
+      toast.dismissAll()
+      toast.success(data.message)
+    } catch (error) {
+      toast.dismissAll()
+      toast.error(error?.response?.data?.message || error.message)
+    }
   }
-  const deleteListing=async(listingId)=>{ 
+  const deleteListing = async (listingId) => { 
+    try {
+      const confirmDelete = window.confirm('Are You Sure Want To Delete This Listing? If Credentials Are Changed, New Credentials Will Be Sent To Your Email ')
+      if(!confirmDelete) return 
+
+      toast.loading("Deleting listing...")
+      const token = await getToken()
+      const { data } = await api.delete(
+        `/api/listing/${listingId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      dispatch(getAllUserListing({ getToken }))
+      dispatch(getAllPublicLising())
+      toast.dismissAll()
+      toast.success(data.message)
+    } catch (error) {
+      toast.dismissAll()
+      toast.error(error?.response?.data?.message||error.message)
+    }
   }
-  const markAsFeatured=async(listingId)=>{ 
+  const markAsFeatured = async (listingId) => { 
+    try {
+      toast.loading("Featureing Listing....")
+      const token = await getToken()
+      const { data } = await api.put(
+        `/api/listing/featured/${listingId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      dispatch(getAllUserListing({ getToken }))
+      dispatch(getAllPublicLising())
+      toast.dismissAll()
+      toast.success(data.message)
+    } catch (error) {
+      toast.dismissAll()
+      toast.error(error?.response?.data?.message||error.message)
+    }
   }
 
 
@@ -98,7 +153,7 @@ const MyListings = () => {
       </div>
       {/* Stats */}
       <div className="grid  grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <StatCard value={userListings.length} title="Total Listings" icon={<Eye className="size-6 text-indigo-600" />} color="indigo" />
+        <StatCard value={(userListings || []).length} title="Total Listings" icon={<Eye className="size-6 text-indigo-600" />} color="indigo" />
 
         <StatCard value={activeListings} title="Active Listings" icon={<CheckCircle className="size-6 text-indigo-600" />} color="green" />
 
@@ -113,9 +168,9 @@ const MyListings = () => {
       {/* balance section */}
       <div className="flex flex-col sm:flex-row justify-between gap-4 xl:gap-20 p-6 mb-10 bg-white rounded-xl border border-gray-200">
         {[
-          { label: 'Earned', value: balance.earned, icon: WalletIcon },
-          { label: 'Withdrawn', value: balance.withdrawn, icon: ArrowDownCircleIcon },
-          { label: 'Available', value: balance.available, icon: CoinsIcon },
+          { label: 'Earned', value: balance?.earned || 0, icon: WalletIcon },
+          { label: 'Withdrawn', value: balance?.withdrawn || 0, icon: ArrowDownCircleIcon },
+          { label: 'Available', value: balance?.available || 0, icon: CoinsIcon },
         ].map((item, index) => (
           <div onClick={()=>item.label==="Available" && setShowWithdarwal(true)}  key={index} className="flex flex-1 items-center justify-between p-4 rounded-lg border border-gray-100 cursor-pointer">
             <div className=" flex items-center gap-3">
@@ -132,7 +187,7 @@ const MyListings = () => {
       </div>
       {/* --------------Listings ---------------------- */}
       {
-        userListings.length === 0 ?
+        !userListings || userListings.length === 0 ?
           (
             <div className="bg-white rounded-lg border border-gray-200 p-16 text-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -140,11 +195,11 @@ const MyListings = () => {
               </div>
               <h3 className="text-xl font-medium text-gray-800 mb-2">No Listings yet</h3>
               <p className="text-gray-600 mb-6 ">Start by Creating your first listinng</p>
-              <button onClick={() => navigate('create-listing')} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium ">Create First Listing</button>
+              <button onClick={() => navigate('/create-listing')} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium ">Create First Listing</button>
             </div>
           ) :
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {userListings.map((listing) => (
+            {(userListings || []).map((listing) => (
               <div key={listing.id} className="bg-white rounded-lg border border-gray-200 hover:shadow-lg shadow-gray-200/70 transition-shadow">
                 <div className="p-6">
                   <div className="flex items-center gap-4 justify-between mb-4">
@@ -184,7 +239,11 @@ const MyListings = () => {
                             </div>
                           </div>
                           {listing.status === 'active' && (
-                            <StarIcon onClick={()=>markAsFeatured(listing.id)} size={18} className={`text-yellow-500 cursor-pointer ${listing.featured && "fill-yellow-50"}`} />
+                            <StarIcon
+                              onClick={()=>markAsFeatured(listing.id)}
+                              size={18}
+                              className={`text-yellow-500 cursor-pointer ${listing.featured ? "fill-yellow-500" : "fill-none"}`}
+                            />
                           )}
                         </div>
 

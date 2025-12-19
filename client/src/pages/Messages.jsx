@@ -1,15 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { dummyChats } from '../assets/assets'
 import { MessageCircle, Search } from 'lucide-react'
 import {format,isToday,isYesterday,parseISO} from 'date-fns'
 import { useDispatch } from 'react-redux'
 import { setChat } from '../App/Features/chatSlice'
+import { useAuth, useUser } from '@clerk/clerk-react'
+import toast from 'react-hot-toast'
+import api from '../configs/axios'
+
 
 const Messages = () => {
   const dispatch =  useDispatch()
-
-  
-  const user = {id:"user_1"}
+  const {getToken} = useAuth()
+  const { user, isLoaded } = useUser()
   
   const [chats,setChats]= useState([])
   const [searchQuery,setSearchQuery] = useState('')
@@ -35,8 +37,16 @@ const Messages = () => {
 
  
   const fetchUserChats = async () => {
-    setChats(dummyChats)
-    setLoading(false)
+    try {
+      const token  = await getToken()
+      const {data} = await api.post('/api/chat/user',{},{headers:{Authorization:`Bearer ${token}`}})
+      setChats(data?.chats)
+      setLoading(false)
+    } catch (error) {
+      toast.error(error?.response?.data?.message||error.message)
+      console.log(error)
+      
+    }
   }
 
 
@@ -50,18 +60,20 @@ const Messages = () => {
       return chat.listing?.title.toLowerCase().includes(query)|| chatUser?.name?.toLocaleLowerCase().includes(query)
     })
 
-  },[chats,searchQuery])
+  },[chats,searchQuery,user])
 
 
 
 
   useEffect(()=>{
-    fetchUserChats()
+    if(user && isLoaded){
+      fetchUserChats()
     const interval  = setInterval(()=>{
       fetchUserChats()
     },10*1000)
     return ()=>clearInterval(interval)
-  },[])
+    }
+  },[user,isLoaded])
 
 
 

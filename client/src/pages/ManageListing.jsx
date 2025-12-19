@@ -1,18 +1,27 @@
-import { Loader2Icon, Upload } from "lucide-react";
+import { AwardIcon, Loader2Icon, Upload } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useAuth } from "@clerk/clerk-react";
+import api from "../configs/axios";
+import { getAllPublicLising, getAllUserListing } from "../App/Features/ListingSlice";
 const ManageListing = () => {
   const { id } = useParams();
   const { userListings } = useSelector((state) => state.listings);
-  const currency = import.meta.env.VITE_CURRENCY || "$";
   const navigate = useNavigate();
+
+const {getToken} = useAuth()
+const dispatch = useDispatch()
+
+
+
+
 
   const [loadingListing, setLoadingListing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  const [fromData, setFormData] = useState({
+  const [formData, setFormData] = useState({
     title: "",
     platform: "",
     username: "",
@@ -79,7 +88,7 @@ const ManageListing = () => {
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
-    if (files.length + fromData.images.length > 5)
+    if (files.length + formData.images.length > 5)
       return toast.error("You can add up to 5 images");
     setFormData((prev) => ({ ...prev, images: [...prev.images, ...files] }));
   };
@@ -108,6 +117,44 @@ const ManageListing = () => {
 
   const handlesubmit = async (e) => {
     e.preventDefault();
+    toast.loading('Saving...')
+    const dataCopy = structuredClone(formData)
+    try {
+      if(isEditing){
+        dataCopy.images = formData.images.filter((image)=>typeof image === "string")
+        const formDataInstance = new FormData()
+        formDataInstance.append('accountDetails',JSON.stringify(dataCopy))
+        formData.images.filter((image)=>typeof image !=="string").forEach((image)=>{formDataInstance.append('images',image)})
+        const token  =  await getToken()
+        const {data} =  await api.put('/api/listing',formDataInstance,{headers:{Authorization:`Bearer ${token}`}})
+        toast.dismissAll()
+        toast.success(data.message)
+        dispatch(getAllUserListing({getToken}))
+        dispatch(getAllPublicLising())
+        navigate('/my-listings')
+      }else{
+        delete dataCopy.images
+        const formDataInstance = new FormData()
+        formDataInstance.append('accountDetails',JSON.stringify(dataCopy))
+        formData.images.forEach((image)=>{
+          formDataInstance.append('images',image)
+        })
+        const token = await getToken()
+        const {data} = await api.post('/api/listing',formDataInstance,{headers:{Authorization:`Bearer ${token}`}})
+        toast.dismissAll()
+        toast.success(data.message)
+        dispatch(getAllUserListing({getToken}))
+        dispatch(getAllPublicLising())
+        navigate('/my-listings')
+      }
+    } catch (error) {
+      toast.dismissAll()
+      toast.error(error?.response?.data?.message||error.message )
+    }
+
+
+
+
   };
   if (loadingListing) {
     return (
@@ -137,7 +184,7 @@ const ManageListing = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <InputField
                 label="Listing Title *"
-                value={fromData.title}
+                value={formData.title}
                 placeholder="e.g., Premium Travel Instagram Account"
                 onChange={(v) => handleInputChange("title", v)}
                 required={true}
@@ -145,13 +192,13 @@ const ManageListing = () => {
               <SelectField
                 label="Platform *"
                 options={platforms}
-                value={fromData.platform}
-                onChange={(v) => handleInputChange("title", v)}
+                value={formData.platform}
+                onChange={(v) => handleInputChange("platform", v)}
                 required={true}
               />
               <InputField
                 label="Username/Handle *"
-                value={fromData.username}
+                value={formData.username}
                 placeholder="@username"
                 onChange={(v) => handleInputChange("username", v)}
                 required={true}
@@ -159,7 +206,7 @@ const ManageListing = () => {
               <SelectField
                 label="Niche/Category"
                 options={niches}
-                value={fromData.niche}
+                value={formData.niche}
                 onChange={(v) => handleInputChange("niche", v)}
                 required={true}
               />
@@ -170,7 +217,7 @@ const ManageListing = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <InputField
                 label="followers Count *"
-                value={fromData.followers_count}
+                value={formData.followers_count}
                 placeholder="10000"
                 onChange={(v) => handleInputChange("followers_count", v)}
                 required={true}
@@ -179,7 +226,7 @@ const ManageListing = () => {
               />
               <InputField
                 label="Engagement Rate (%) *"
-                value={fromData.engagement_rate}
+                value={formData.engagement_rate}
                 placeholder="4"
                 onChange={(v) => handleInputChange("engagement_rate", v)}
                 max={100}
@@ -189,7 +236,7 @@ const ManageListing = () => {
 
               <InputField
                 label="Monthly Views/Impressions *"
-                value={fromData.monthly_views}
+                value={formData.monthly_views}
                 placeholder="10000"
                 onChange={(v) => handleInputChange("monthly_views", v)}
                 type="number"
@@ -199,14 +246,14 @@ const ManageListing = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <InputField
                 label="Primary Audience Country *"
-                value={fromData.country}
+                value={formData.country}
                 placeholder="United States"
                 onChange={(v) => handleInputChange("country", v)}
               />
               <SelectField
                 label="Primary Audience Age Range"
                 options={ageRanges}
-                value={fromData.age_range}
+                value={formData.age_range}
                 onChange={(v) => handleInputChange("age_range", v)}
               />
             </div>
@@ -214,12 +261,12 @@ const ManageListing = () => {
             <div className="space-y-3">
               <Checkboxfield
                 label="Account is Verified on the platform"
-                checked={fromData.verified}
+                checked={formData.verified}
                 onChange={(v) => handleInputChange("verified", v)}
               />
                <Checkboxfield
                 label="Account is monetized"
-                checked={fromData.monetized}
+                checked={formData.monetized}
                 onChange={(v) => handleInputChange("monetized", v)}
               />
             </div>
@@ -228,14 +275,14 @@ const ManageListing = () => {
           <Section title="Pricing & Description">
             <InputField
                 label="Asking Price (USD)  *"
-                value={fromData.price}
+                value={formData.price}
                 type="number"
                 min={0}
                 placeholder="United States"
                 onChange={(v) => handleInputChange("price", v)}
                 required={true}
               />
-              <TextareaField label="Description *" required={true} value={FormData.description} onChange={(v) => handleInputChange("description", v)}/>
+              <TextareaField label="Description *" required={true} value={formData.description} onChange={(v) => handleInputChange("description", v)}/>
           </Section>
 
           {/* ------------------------IMAGES----------------------- */}
@@ -261,9 +308,9 @@ const ManageListing = () => {
                   Upload screenshots or proof of account analytics
                 </p>
               </div>
-              {fromData.images.length > 0 && (
+              {formData.images.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                  {fromData.images.map((img, index) => {
+                  {formData.images.map((img, index) => {
                     const preview =
                       typeof img === "string" ? img : URL.createObjectURL(img);
                     return (

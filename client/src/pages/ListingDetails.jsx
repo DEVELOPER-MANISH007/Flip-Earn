@@ -20,8 +20,10 @@ import {
   Users,
 } from "lucide-react";
 import { setChat } from "../App/Features/chatSlice";
+import toast from "react-hot-toast";
 
 const ListingDetails = () => {
+  const {user,isLoaded} = useUser()
 
   const dispatch = useDispatch()
 
@@ -45,7 +47,11 @@ const ListingDetails = () => {
   };
   
   const purchaseAccount = async () => {};
+
   const loadChatbox = () => {
+    if(!isLoaded || !user) return toast("Please login to chat with seller")
+      if(user.id===listing.ownerId) return toast("You can't chat with your own listing")
+    
     dispatch(setChat({listing:listing}))
   };
 

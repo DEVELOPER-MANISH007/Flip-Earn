@@ -1,24 +1,67 @@
-import {createSlice} from '@reduxjs/toolkit'
-import {dummyListings} from "../../assets/assets"
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import api from '../../configs/axios'
 
-const listingSlice = createSlice({
-name:"Listing",
-initialState:{
-    listings:dummyListings,
-    userListings:dummyListings,
-    balance:{
-        earned:0,
-        withdrawn:0,
-        available:0
+
+//?get all public listing 
+
+export const getAllPublicLising = createAsyncThunk("listing/getAllPublicLising", async () => {
+    try {
+        const { data } = await api.get('/api/listing/public')
+        return data;
+    } catch (error) {
+        console.log(error)
+        return { listings: [] }
     }
-},
-reducers:{
-    setListings:(state,action)=>{
-        state.listings = action.payload
-    }
- 
-}
 })
 
-export const {setListings} = listingSlice.actions
+//* get al user listings
+
+
+export const getAllUserListing = createAsyncThunk("listing/getAllUserListing", async ({ getToken }) => {
+    try {
+
+        const token = await getToken()
+        const { data } = await api.get('/api/listing/user', { headers: { Authorization: `Bearer ${token}` } })
+        return data
+
+    } catch (error) {
+        console.log(error)
+        return { listing: [], balance: { earned: 0, withdrawn: 0, available: 0 } }
+    }
+})
+
+
+
+
+
+const listingSlice = createSlice({
+    name: "Listing",
+    initialState: {
+        listings: [],
+        userListings: [],
+        balance: {
+            earned: 0,
+            withdrawn: 0,
+            available: 0
+        }
+    },
+    reducers: {
+        setListings: (state, action) => {
+            state.listings = action.payload
+        }
+
+    },
+    extraReducers:(builder)=>{
+        builder.addCase(getAllPublicLising.fulfilled,(state,action)=>{
+            state.listings = action.payload?.listings || []
+        })
+        builder.addCase(getAllUserListing.fulfilled,(state,action)=>{
+            state.userListings = action.payload?.listing || []
+            state.balance = action.payload?.balance || { earned: 0, withdrawn: 0, available: 0 }
+        })
+    }
+})
+
+
+export const { setListings } = listingSlice.actions
 export default listingSlice.reducer
