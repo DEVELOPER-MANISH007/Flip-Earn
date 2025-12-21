@@ -4,16 +4,29 @@ import { useState } from 'react';
 import CredentialVerifyModal from '../../components/admin/CredentialVerifyModal';
 import { Loader2Icon } from 'lucide-react';
 import { dummyListings } from '../../assets/assets';
+import { useAuth } from '@clerk/clerk-react';
+import toast from 'react-hot-toast';
+import api from '../../configs/axios';
 
 const CredentialVerify = () => {
+    const {getToken} = useAuth()
 
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(null);
 
     const fetchAllUnverifiedListings = async () => {
-        setListings(dummyListings);
-        setLoading(false);
+        try {
+            const token = await getToken()
+            const {data} =  await api.get('/api/admin/unverified-listings',{headers:{Authorization:`Bearer ${token}`}})
+            setListings(data.listings || [])
+            setLoading(false)
+        } catch (error) {
+            toast.error(error?.response?.data?.message||error.message)
+            console.log(error)
+            setListings([])
+            setLoading(false)
+        }
     };
 
     useEffect(() => {
@@ -27,7 +40,7 @@ const CredentialVerify = () => {
     ) : (
         <div className='h-full'>
             {/* Table */}
-            {listings.length === 0 ? (
+            {!listings || listings.length === 0 ? (
                 <div className='flex flex-col items-center justify-center text-center text-gray-600 h-full'>
                     <h3 className='text-2xl font-bold'>All Credentials Verified</h3>
                     <p>No listings with unverified credentials found</p>
