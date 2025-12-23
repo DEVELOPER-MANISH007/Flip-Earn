@@ -10,11 +10,29 @@ const tranporter = nodemailer.createTransport({
 })
 
 export const sendEmail = async({to,subject,html})=>{
-    const response = await tranporter.sendMail({
-        from:process.env.SENDER_EMAIL,
-        to,
-        subject,
-        html
-    })
-    return response
+    try {
+        if (!process.env.SMTP_USER || !process.env.SMTP_PASS || !process.env.SENDER_EMAIL) {
+            console.error('❌ Email configuration missing:', {
+                hasSMTP_USER: !!process.env.SMTP_USER,
+                hasSMTP_PASS: !!process.env.SMTP_PASS,
+                hasSENDER_EMAIL: !!process.env.SENDER_EMAIL
+            });
+            throw new Error('Email configuration is missing');
+        }
+
+        console.log(`📧 Attempting to send email to: ${to}`);
+        
+        const response = await tranporter.sendMail({
+            from: process.env.SENDER_EMAIL,
+            to,
+            subject,
+            html
+        });
+        
+        console.log(`✅ Email sent successfully. MessageId: ${response.messageId}`);
+        return response;
+    } catch (error) {
+        console.error('❌ Error sending email:', error);
+        throw error;
+    }
 }

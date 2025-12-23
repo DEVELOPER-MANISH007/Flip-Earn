@@ -65,9 +65,11 @@ export const stripeWebhooks = async (req, res) => {
                 
                 // send new credentials to the buyer using the email address
                 await inngest.send({
-                    name:"app/puchase",
+                    name:"app/purchase",
                     data:{transaction}
                 })
+                
+                console.log(`📧 Email event sent for transaction: ${transactionId}`);
                 
 
                 // Mark the listing as sold
@@ -117,9 +119,11 @@ export const stripeWebhooks = async (req, res) => {
                   console.log(`✅ Transaction ${piTransactionId} marked as paid`);
                   
                   await inngest.send({
-                      name:"app/puchase",
+                      name:"app/purchase",
                       data:{transaction}
                   })
+                  
+                  console.log(`📧 Email event sent for transaction: ${piTransactionId}`);
 
                   await prisma.listing.update({
                       where:{id:transaction.listingId},

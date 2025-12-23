@@ -175,28 +175,56 @@ const sendPurchaseEmail = inngest.createFunction(
     { id: "send-purchase-email" },
     { event: "app/purchase" },
     async ({ event }) => {
-        const { transaction } = event.data;
+        try {
+            const { transaction } = event.data;
+            
+            console.log(`📧 Processing email for transaction: ${transaction.id}`);
 
-        const costumer = await prisma.user.findFirst({
-            where: { id: transaction.userId },
-        });
+            const customer = await prisma.user.findFirst({
+                where: { id: transaction.userId },
+            });
 
-        const listing = await prisma.listing.findFirst({
-            where: { id: transaction.listingId },
-        });
+            const listing = await prisma.listing.findFirst({
+                where: { id: transaction.listingId },
+            });
 
-        const credential = await prisma.credential.findFirst({
-            where: { listingId: transaction.listingId },
-        });
+            const credential = await prisma.credential.findFirst({
+                where: { listingId: transaction.listingId },
+            });
 
-        if (!costumer || !listing || !credential) {
-            throw new Error("Missing data for purchase email");
-        }
+            if (!customer) {
+                console.error(`❌ Customer not found for userId: ${transaction.userId}`);
+                throw new Error("Customer not found");
+            }
 
-        await sendEmail({
-            to: costumer.email,
-            subject: "Your Credentials for the Account You Purchased",
-            html: `
+            if (!listing) {
+                console.error(`❌ Listing not found for listingId: ${transaction.listingId}`);
+                throw new Error("Listing not found");
+            }
+
+            if (!credential) {
+                console.error(`❌ Credential not found for listingId: ${transaction.listingId}`);
+                throw new Error("Credential not found");
+            }
+
+            if (!customer.email) {
+                console.error(`❌ Customer email not found for userId: ${transaction.userId}`);
+                throw new Error("Customer email not found");
+            }
+
+            // Check if updatedCredential exists and has data
+            const credentialsHtml = credential.updatedCredential && credential.updatedCredential.length > 0
+                ? credential.updatedCredential
+                    .map((cred) => `<p><b>${cred.name}</b>: ${cred.value}</p>`)
+                    .join("")
+                : '<p>Credentials are being processed. Please check your account.</p>';
+
+            console.log(`📧 Sending email to: ${customer.email}`);
+
+            await sendEmail({
+                to: customer.email,
+                subject: "Your Credentials for the Account You Purchased",
+                html: `
           <h2>
             Thank you for purchasing the account 
             <b>@${listing.username}</b> on <b>${listing.platform}</b>
@@ -206,9 +234,7 @@ const sendPurchaseEmail = inngest.createFunction(
   
           <h3>New Credentials</h3>
           <div>
-            ${credential.updatedCredential
-                    .map((cred) => `<p><b>${cred.name}</b>: ${cred.value}</p>`)
-                    .join("")}
+            ${credentialsHtml}
           </div>
   
           <p>
@@ -216,7 +242,14 @@ const sendPurchaseEmail = inngest.createFunction(
             <a href="mailto:manish875506341@gmail.com">devManish@dev.com</a>
           </p>
         `,
-        });
+            });
+            
+            console.log(`✅ Email sent successfully to: ${customer.email}`);
+            return { success: true, email: customer.email };
+        } catch (error) {
+            console.error("❌ Error sending purchase email:", error);
+            throw error;
+        }
     }
 );
 
