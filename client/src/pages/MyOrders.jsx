@@ -146,7 +146,7 @@ if(!orders.length){
               {isExpanded &&(
                 <div className='mt-4 md:mt-0 pt-4'>
                   <div className='space-y-2'>
-                    {
+                    {credential && credential.updatedCredential && credential.updatedCredential.length > 0 ? (
                       credential.updatedCredential.map((cred)=>(
                         <div key={cred.name} className='flex items-center justify-between gap-3 bg-gray-50 rounded-md p-2'>
                           <div>
@@ -167,7 +167,11 @@ if(!orders.length){
 
                         </div>
                       ))
-                    }
+                    ) : (
+                      <div className='text-sm text-gray-500 p-4 bg-gray-50 rounded-md'>
+                        Credentials are being processed. Please check back later.
+                      </div>
+                    )}
 
                   </div>
 

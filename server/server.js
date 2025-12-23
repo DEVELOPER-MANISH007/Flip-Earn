@@ -11,7 +11,7 @@ import adminRouter from './routes/adminRoutes.js';
 import { stripeWebhooks } from './controllers/stripeWebhooks.js';
 
 const app = express()
-app.use('/api/stripe',express.raw({type:'aplication/json'}),stripeWebhooks)
+app.use('/api/stripe',express.raw({type:'application/json'}),stripeWebhooks)
 
 
 app.use(express.json())

@@ -12,7 +12,7 @@ listingRouter.get('/:id/status',protect,toggleStatus)
 listingRouter.delete('/:listingId',protect,deleteListing)
 listingRouter.post('/add-credentials',protect,addCredential)
 listingRouter.put('/featured/:id',protect,markFeatured)
-listingRouter.get('/user-orders',protect,getAllUserListings)
+listingRouter.get('/user-orders',protect,getAllUserOrders)
 listingRouter.get('/withdraw',protect,getAllUserOrders)
 listingRouter.get('/purchase-account/:listingId',protect,purchaseAccount)
 

@@ -358,26 +358,40 @@ export const markFeatured = async (req, res) => {
 export const getAllUserOrders = async (req, res) => {
     try {
         const { userId } = await req.auth()
+        
+        // Debug: Log all transactions for this user
+        const allTransactions = await prisma.transaction.findMany({
+            where: { userId },
+            include: { listing: true }
+        })
+        console.log(`User ${userId} has ${allTransactions.length} total transactions`);
+        console.log(`Paid transactions: ${allTransactions.filter(t => t.isPaid).length}`);
+        
         let orders = await prisma.transaction.findMany({
             where: { userId, isPaid: true },
-            include: { listing: true }
-
+            include: { listing: true },
+            orderBy: { createdAt: 'desc' }
         })
+        
+        console.log(`Found ${orders.length} paid orders for user ${userId}`);
+        
         if (!orders || orders.length === 0) {
-            return req.json({ orders: [] })
+            return res.json({ orders: [] })
         }
         //attach the credential to each order
         const credentials = await prisma.credential.findMany({
             where: { listingId: { in: orders.map((order) => order.listingId) } }
 
         })
-        const ordersWithCredentials = order.map((order) => {
+        const ordersWithCredentials = orders.map((order) => {
             const credential = credentials.find((cred) => cred.listingId === order.listingId)
-            return { ...order, credential }
+            return { ...order, credential: credential || null }
         })
+        
+        console.log(`Returning ${ordersWithCredentials.length} orders with credentials`);
         return res.json({ orders: ordersWithCredentials })
     } catch (error) {
-        console.log(error)
+        console.error('Error in getAllUserOrders:', error)
         res.status(500).json({ message: error.code || error.message })
 
     }
@@ -442,14 +456,15 @@ export const purchaseAccount = async (req, res) => {
       });
   
       const session = await stripe.checkout.sessions.create({
-        success_url: `${origin}/loading/my-orders`,
-        cancel_url: `${origin}/loading/my-orders`,
+        success_url: `${origin}/loading/my-orders?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/listing/${listingId}`,
         line_items: [
           {
             price_data: {
               currency: 'usd',
               product_data: {
                 name: `Purchasing Account @${listing.username} of ${listing.platform}`,
+                description: `Purchase ${listing.platform} account: @${listing.username}`,
               },
               unit_amount: Math.floor(transaction.amount) * 100,
             },
@@ -457,12 +472,27 @@ export const purchaseAccount = async (req, res) => {
           },
         ],
         mode: 'payment',
+        payment_intent_data: {
+          metadata: {
+            transactionId: transaction.id,
+            appId: 'FlipEarn',
+            listingId: listing.id,
+            userId: userId,
+            ownerId: listing.ownerId,
+          },
+        },
         metadata: {
           transactionId: transaction.id,
           appId: 'FlipEarn',
+          listingId: listing.id,
+          userId: userId,
+          ownerId: listing.ownerId,
         },
         expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
+        payment_method_types: ['card'],
       });
+      
+      console.log(`Created Stripe checkout session: ${session.id} for transaction: ${transaction.id}`);
   
       return res.json({ paymentLink: session.url });
     } catch (error) {
