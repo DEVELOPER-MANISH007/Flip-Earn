@@ -15,7 +15,7 @@ adminRouter.get('/credential/:listingId',protectAdmin,getCredentials)
 adminRouter.put('/verify-credential/:listingId',protectAdmin,markCredentialsVerified)
 adminRouter.get('/unchanged-listings',protectAdmin,getAllUnchangedListings)
 
-adminRouter.put('/changed-credentials/:listingId',protectAdmin,changeCredential)
+adminRouter.put('/change-credential/:listingId',protectAdmin,changeCredential)
 adminRouter.get('/transactions',protectAdmin,getAllTransactions)
 adminRouter.get('/withdrawal-requests',protectAdmin,getWithdrawRequests)
 adminRouter.put('/withdrawal-mark/:id',protectAdmin,markWithdrawalAsPaid)

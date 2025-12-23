@@ -8,8 +8,10 @@ import { inngest, functions } from "./Inngest/index.js"
 import listingRouter from './routes/ListingRoutes.js';
 import chatRouter from './routes/ChatRoutes.js';
 import adminRouter from './routes/adminRoutes.js';
+import { stripeWebhooks } from './controllers/stripeWebhooks.js';
 
 const app = express()
+app.use('/api/stripe',express.raw({type:'aplication/json'}),stripeWebhooks)
 
 
 app.use(express.json())
