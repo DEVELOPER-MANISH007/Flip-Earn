@@ -225,22 +225,79 @@ const sendPurchaseEmail = inngest.createFunction(
                 to: customer.email,
                 subject: "Your Credentials for the Account You Purchased",
                 html: `
-          <h2>
-            Thank you for purchasing the account 
-            <b>@${listing.username}</b> on <b>${listing.platform}</b>
-          </h2>
-  
-          <p>Here are your credentials for the listing you purchased:</p>
-  
-          <h3>New Credentials</h3>
-          <div>
-            ${credentialsHtml}
-          </div>
-  
-          <p>
-            If you have any questions, please contact us at 
-            <a href="mailto:manish875506341@gmail.com">devManish@dev.com</a>
-          </p>
+          <!DOCTYPE html>
+          <html lang="en">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <title>Your Purchase Credentials</title>
+            </head>
+            <body style="margin:0;padding:0;background-color:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#f5f5f7;padding:24px 0;">
+                <tr>
+                  <td align="center">
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:640px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(15,23,42,0.12);">
+                      <tr>
+                        <td style="padding:20px 24px;background:linear-gradient(135deg,#0f172a,#1d4ed8);color:#f9fafb;">
+                          <h1 style="margin:0;font-size:20px;font-weight:600;">Purchase Successful 🎉</h1>
+                          <p style="margin:6px 0 0;font-size:13px;opacity:0.85;">
+                            Thanks for purchasing <strong>@${listing.username}</strong> on <strong>${listing.platform}</strong>.
+                          </p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:20px 24px 8px 24px;">
+                          <p style="margin:0 0 14px 0;font-size:13px;color:#4b5563;">
+                            Hi ${customer.name || "there"},
+                          </p>
+                          <p style="margin:0 0 16px 0;font-size:13px;color:#4b5563;line-height:1.6;">
+                            Below are the login details for the account you purchased. Please keep this email safe and do not share these credentials with anyone.
+                          </p>
+                          <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:8px 0 18px 0;font-size:13px;border-collapse:collapse;">
+                            <tr>
+                              <td style="padding:6px 0;color:#6b7280;width:32%;">Listing</td>
+                              <td style="padding:6px 0;color:#111827;"><strong>@${listing.username}</strong></td>
+                            </tr>
+                            <tr>
+                              <td style="padding:6px 0;color:#6b7280;">Platform</td>
+                              <td style="padding:6px 0;color:#111827;"><strong>${listing.platform}</strong></td>
+                            </tr>
+                            <tr>
+                              <td style="padding:6px 0;color:#6b7280;">Order ID</td>
+                              <td style="padding:6px 0;color:#111827;">${transaction.id}</td>
+                            </tr>
+                          </table>
+                          <div style="margin:14px 0 6px 0;">
+                            <h2 style="margin:0 0 6px 0;font-size:15px;color:#111827;">Account Credentials</h2>
+                            <div style="padding:12px 14px;border-radius:10px;background-color:#f3f4ff;border:1px solid #e0e7ff;font-size:13px;color:#111827;">
+                              ${credentialsHtml}
+                            </div>
+                          </div>
+                          <div style="margin:16px 0 0 0;">
+                            <p style="margin:0 0 8px 0;font-size:12px;color:#6b7280;line-height:1.5;">
+                              <strong>Security tip:</strong> We recommend logging in immediately and changing the password and recovery information to your own details.
+                            </p>
+                            <p style="margin:0 0 0 0;font-size:12px;color:#6b7280;">
+                              If anything looks incorrect, reply to this email or contact us at
+                              <a href="mailto:manish875506341@gmail.com" style="color:#1d4ed8;text-decoration:none;">devManish@dev.com</a>.
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:16px 24px 18px 24px;border-top:1px solid #e5e7eb;background-color:#f9fafb;">
+                          <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.5;">
+                            You are receiving this email because you completed a purchase on our marketplace.
+                            If you did not make this purchase, please contact support immediately.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </body>
+          </html>
         `,
             });
             
@@ -271,37 +328,88 @@ const sendNewCredentials = inngest.createFunction(
   
       await sendEmail({
         to: listing.owner.email,
-        subject: "New Credentials for Your Deleted Listing",
+        subject: "Updated Credentials for Your Listing",
         html: `
-          <h2>Your new credentials for the deleted listing</h2>
-  
-          <p><b>Title:</b> ${listing.title}</p>
-          <p><b>Platform:</b> ${listing.platform}</p>
-  
-          <h3>New Credentials</h3>
-          <div>
-            ${(newCredentials.updatedCredential || [])
-              .map(
-                (cred) =>
-                  `<p><b>${cred.name}</b>: ${cred.value}</p>`
-              )
-              .join("")}
-          </div>
-  
-          <h3>Old Credentials</h3>
-          <div>
-            ${(newCredentials.originalCredential || [])
-              .map(
-                (cred) =>
-                  `<p><b>${cred.name}</b>: ${cred.value}</p>`
-              )
-              .join("")}
-          </div>
-  
-          <p style="margin-top:20px">
-            If you have any questions, please contact us at 
-            <a href="mailto:manish875506341@gmail.com">devManish@dev.com</a>
-          </p>
+          <!DOCTYPE html>
+          <html lang="en">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <title>Updated Listing Credentials</title>
+            </head>
+            <body style="margin:0;padding:0;background-color:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#f5f5f7;padding:24px 0;">
+                <tr>
+                  <td align="center">
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:640px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(15,23,42,0.12);">
+                      <tr>
+                        <td style="padding:20px 24px;background:linear-gradient(135deg,#0f172a,#06b6d4);color:#f9fafb;">
+                          <h1 style="margin:0;font-size:20px;font-weight:600;">Listing Credentials Updated</h1>
+                          <p style="margin:6px 0 0;font-size:13px;opacity:0.85;">
+                            We've generated and stored new credentials for one of your listings.
+                          </p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:20px 24px 8px 24px;">
+                          <p style="margin:0 0 12px 0;font-size:13px;color:#4b5563;">
+                            Hi ${listing.owner?.name || "there"},
+                          </p>
+                          <p style="margin:0 0 14px 0;font-size:13px;color:#4b5563;line-height:1.6;">
+                            Here are the updated credentials for your listing. Keep this information safe and do not share it publicly.
+                          </p>
+                          <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:8px 0 18px 0;font-size:13px;border-collapse:collapse;">
+                            <tr>
+                              <td style="padding:6px 0;color:#6b7280;width:32%;">Title</td>
+                              <td style="padding:6px 0;color:#111827;"><strong>${listing.title}</strong></td>
+                            </tr>
+                            <tr>
+                              <td style="padding:6px 0;color:#6b7280;">Platform</td>
+                              <td style="padding:6px 0;color:#111827;"><strong>${listing.platform}</strong></td>
+                            </tr>
+                          </table>
+                          <div style="margin:10px 0 4px 0;">
+                            <h2 style="margin:0 0 6px 0;font-size:15px;color:#111827;">New Credentials</h2>
+                            <div style="padding:12px 14px;border-radius:10px;background-color:#ecfdf5;border:1px solid #bbf7d0;font-size:13px;color:#14532d;">
+                              ${(newCredentials.updatedCredential || [])
+                                .map(
+                                  (cred) =>
+                                    `<p style="margin:0 0 4px 0;"><strong>${cred.name}:</strong> ${cred.value}</p>`
+                                )
+                                .join("")}
+                            </div>
+                          </div>
+                          <div style="margin:16px 0 0 0;">
+                            <h2 style="margin:0 0 6px 0;font-size:15px;color:#111827;">Previous Credentials</h2>
+                            <div style="padding:12px 14px;border-radius:10px;background-color:#fef3c7;border:1px solid #fed7aa;font-size:13px;color:#92400e;">
+                              ${(newCredentials.originalCredential || [])
+                                .map(
+                                  (cred) =>
+                                    `<p style="margin:0 0 4px 0;"><strong>${cred.name}:</strong> ${cred.value}</p>`
+                                )
+                                .join("")}
+                            </div>
+                          </div>
+                          <p style="margin:16px 0 0 0;font-size:12px;color:#6b7280;line-height:1.5;">
+                            If you have any questions, please contact us at
+                            <a href="mailto:manish875506341@gmail.com" style="color:#0ea5e9;text-decoration:none;">devManish@dev.com</a>.
+                          </p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:16px 24px 18px 24px;border-top:1px solid #e5e7eb;background-color:#f9fafb;">
+                          <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.5;">
+                            This message was sent because credentials were updated for one of your listings.
+                            Keep this information confidential and secure.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </body>
+          </html>
         `,
       });
     }
