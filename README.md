@@ -16,23 +16,120 @@ Yeh project ek **Social Media Account Marketplace** hai jahan:
 
 ```
 .
-├── client/          # Frontend (React + Vite)
+├── client/                          # Frontend (React + Vite)
+│   ├── public/                      # Public static files
+│   │   ├── favicon.ico
+│   │   └── vite.svg
 │   ├── src/
-│   │   ├── App/           # Redux store aur slices
-│   │   ├── components/    # Reusable components
-│   │   ├── pages/         # Page components
-│   │   ├── configs/       # Configuration files
-│   │   └── assets/        # Images aur static files
-│   └── package.json
+│   │   ├── App/                     # Redux store aur slices
+│   │   │   ├── Features/
+│   │   │   │   ├── chatSlice.js     # Chat state management
+│   │   │   │   └── ListingSlice.js  # Listing state management
+│   │   │   └── Store.js             # Redux store configuration
+│   │   │
+│   │   ├── components/              # Reusable components
+│   │   │   ├── admin/               # Admin-specific components
+│   │   │   │   ├── AdminNavbar.jsx          # Admin navigation bar
+│   │   │   │   ├── AdminSidebar.jsx         # Admin sidebar navigation
+│   │   │   │   ├── AdminTitle.jsx           # Admin page titles
+│   │   │   │   ├── CredentialChangeModal.jsx # Credential change modal
+│   │   │   │   ├── CredentialVerifyModal.jsx # Credential verification modal
+│   │   │   │   ├── ListingDetailsModal.jsx   # Listing details modal
+│   │   │   │   └── WithdrawalDetail.jsx      # Withdrawal details component
+│   │   │   │
+│   │   │   ├── ChatBox.jsx                  # Real-time chat component
+│   │   │   ├── CredentialSubmission.jsx      # Credential submission form
+│   │   │   ├── CTA.jsx                      # Call-to-action component
+│   │   │   ├── FilterSideBar.jsx            # Marketplace filter sidebar
+│   │   │   ├── Footer.jsx                   # Footer component
+│   │   │   ├── Hero.jsx                     # Landing page hero section
+│   │   │   ├── LatestListings.jsx           # Latest listings display
+│   │   │   ├── ListingCard.jsx              # Individual listing card
+│   │   │   ├── Navbar.jsx                   # Main navigation bar
+│   │   │   ├── Plans.jsx                    # Pricing plans component
+│   │   │   ├── StatCard.jsx                 # Statistics card component
+│   │   │   ├── Title.jsx                    # Page title component
+│   │   │   └── WithdrawModal.jsx            # Withdrawal modal
+│   │   │
+│   │   ├── pages/                    # Page components
+│   │   │   ├── admin/                # Admin pages
+│   │   │   │   ├── AllListings.jsx           # View all listings
+│   │   │   │   ├── CredentialChange.jsx      # Credential change requests
+│   │   │   │   ├── CredentialVerify.jsx      # Credential verification
+│   │   │   │   ├── Dashboard.jsx             # Admin dashboard
+│   │   │   │   ├── Layout.jsx                # Admin layout wrapper
+│   │   │   │   ├── Transactions.jsx          # Transaction management
+│   │   │   │   └── Withdrawal.jsx            # Withdrawal management
+│   │   │   │
+│   │   │   ├── Home.jsx                      # Landing/home page
+│   │   │   ├── ListingDetails.jsx            # Listing detail page
+│   │   │   ├── Loading.jsx                   # Loading page
+│   │   │   ├── ManageListing.jsx             # Create/Edit listing page
+│   │   │   ├── MarketPlace.jsx               # Marketplace browse page
+│   │   │   ├── Messages.jsx                  # Messages/chat page
+│   │   │   ├── MyListings.jsx                # User's listings page
+│   │   │   └── MyOrders.jsx                  # User's orders page
+│   │   │
+│   │   ├── configs/                   # Configuration files
+│   │   │   └── axios.js               # Axios HTTP client configuration
+│   │   │
+│   │   ├── assets/                    # Images aur static files
+│   │   │   ├── assets.jsx             # Asset exports
+│   │   │   ├── favicon.ico
+│   │   │   ├── image_1.jpg
+│   │   │   ├── image_2.jpg
+│   │   │   ├── image_3.jpg
+│   │   │   ├── image_4.jpg
+│   │   │   ├── logo.svg
+│   │   │   ├── schema.prisma
+│   │   │   └── user_profile.png
+│   │   │
+│   │   ├── context/                   # React context (if any)
+│   │   │
+│   │   ├── App.jsx                     # Main App component with routes
+│   │   ├── main.jsx                    # Application entry point
+│   │   └── index.css                   # Global styles
+│   │
+│   ├── eslint.config.js               # ESLint configuration
+│   ├── index.html                     # HTML template
+│   ├── package.json                   # Frontend dependencies
+│   ├── vite.config.js                 # Vite configuration
+│   └── vercel.json                    # Vercel deployment config
 │
-└── server/         # Backend (Node.js + Express)
-    ├── config/     # ImageKit, Nodemailer, Prisma configs
-    ├── controllers/ # Business logic
-    ├── routes/     # API routes
-    ├── middlewares/ # Authentication middleware
-    ├── Models/     # Data models
-    ├── Inngest/    # Background jobs
-    └── prisma/     # Database schema
+└── server/                            # Backend (Node.js + Express)
+    ├── config/                        # Configuration files
+    │   ├── Imagekit.js                # ImageKit configuration
+    │   ├── Multer.js                  # File upload configuration
+    │   ├── Nodemailer.js              # Email service configuration
+    │   └── prisma.js                  # Prisma client configuration
+    │
+    ├── controllers/                   # Business logic controllers
+    │   ├── Admincontroler.js          # Admin operations controller
+    │   ├── ChatController.js          # Chat operations controller
+    │   ├── ListingControllers.js      # Listing operations controller
+    │   └── stripeWebhooks.js          # Stripe webhook handler
+    │
+    ├── routes/                        # API routes
+    │   ├── adminRoutes.js             # Admin API routes
+    │   ├── ChatRoutes.js              # Chat API routes
+    │   └── ListingRoutes.js           # Listing API routes
+    │
+    ├── middlewares/                   # Express middlewares
+    │   └── authMiddleware.js          # Authentication middleware
+    │
+    ├── Models/                        # Data models
+    │   └── Auth.js                    # Authentication model
+    │
+    ├── Inngest/                       # Background job processing
+    │   └── index.js                   # Inngest functions configuration
+    │
+    ├── prisma/                        # Database schema
+    │   └── schema.prisma              # Prisma database schema
+    │
+    ├── package.json                   # Backend dependencies
+    ├── prisma.config.ts               # Prisma configuration
+    ├── server.js                      # Express server entry point
+    └── vercel.json                    # Vercel deployment config
 ```
 
 ## 🛠️ Technologies Used
